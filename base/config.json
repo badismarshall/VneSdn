@@ -1,0 +1,9 @@
+{   
+    "ONOS": {
+        "ip_address": "",
+        "port": "8181",
+        "user": "karaf",
+        "password": "karaf"
+    }
+
+}

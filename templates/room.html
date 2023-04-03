@@ -1,0 +1,23 @@
+
+{% load static %}
+<head>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <svg id="svg1" width="1000px" height="100vh"> </svg>
+    {{DeviceID |json_script:"DeviceID"}}
+    {{links |json_script:"links"}}
+    {{hosts|json_script:"hosts"}}
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static 'styles/main.css' %}">
+    </script>
+    <script src="{% static 'styles/room.js' %}"></script>
+</head>
+{% include 'navbar.html'%}
+<body> 
+    <div class="container">
+            <!-- <svg width="1920" height="1080"></svg> -->
+
+                </svg>
+        </div>
+    </div>
+</body>
+
+

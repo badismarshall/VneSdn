@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap');
+
+.links line {
+    stroke: rgb(19, 218, 19);
+    stroke-opacity: 0.6;
+  }
+
+.info {
+  background-color: aquamarine;
+  width: 150px;
+  height: 150px;
+}
+.nav {
+  background-color: rgb(27, 192, 192);
+  border: solid;
+  border-color: #ffffff;
+  border-width: 1px;
+  color: #ffffff;
+  height: 100vh;
+  width: auto;
+  align-items: center;
+  padding: 5px;
+  margin: 10px;
+}
+
+.container{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
