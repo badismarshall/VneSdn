@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpRequest
 import requests
 from json import dumps
 import json
-
+from base.models import VirtualNetwork, LogicalNode, LogicalLink, Mapping
 # # Create your views here.
 # Récuperer l'addres ip du controller
 IpAddress = "localhost"
@@ -101,6 +101,15 @@ def delete_flow(deviceID, flowID):
 
 
 print(DevicesIDs)
+virtual_networks = VirtualNetwork.objects.get(name="VN1")
+virtual_nodes = LogicalNode.objects.filter(virtual_network=virtual_networks)
+logical_links = LogicalLink.objects.get(name="LL1VN1")
+substrate_links = Mapping.objects.filter(logical_link=logical_links)
+for link in substrate_links:
+    print(link.substrate_link.name)
+# print(substrate_links)
+
+print(virtual_nodes)
 
 def home(request):
     return render(request, 'home.html')

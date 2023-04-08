@@ -3,7 +3,12 @@
         "ip_address": "",
         "port": "8181",
         "user": "karaf",
-        "password": "karaf"
+        "password": "karaf",
+        "Polling_interval": 5000
+    },
+    "sflow": {
+        "ip_address": "",
+        "port": "6343",
+        "Polling_interval": 5000
     }
-
 }

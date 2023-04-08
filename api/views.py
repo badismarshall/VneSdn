@@ -13,7 +13,7 @@ def getTopologie(request):
 
     links = []
     for link in DataTopo['links']:
-        links.append({"source": link ["src"]["device"] , "target": link["dst"]["device"] })
+        links.append({"source": link ["src"]["device"] , "target": link["dst"]["device"], "port": link["src"]["port"] }) # on récupère les liens entre les devices et le port de source
 
     return JsonResponse({'links':links}, safe=True)
 
@@ -32,6 +32,31 @@ def getDevices(request):
         DevicesIDs['devices'].append(device['id'])
 
     return JsonResponse(DevicesIDs, safe=True)
+
+def postVn(request):
+    # get Data from request
+    devices = request.POST.get('devices')
+    links = request.POST.get('links')
+    # check if devices and links are not empty
+    if(devices == None or links == None):
+        return 
+    # create a new virtual network
+    # TODO: check if the virtual network can be mapped if it is so insert it in the database
+    # TODO: if the virtual network can't be mapped return an Notification (requestNot added) to the user (FrontEnd)
+
+def deleteVn(request, id):
+    print(id)
+    return JsonResponse({"message": "Virtual Network deleted"}, safe=False)
+
+
+def getStatistics(request):
+    # get Statistics
+    statistics = requests.get("http://"+ "localhost" + ":8181/onos/v1/statistics/delta/ports", auth =('onos','rocks'))
+    if(statistics.status_code == 200):
+        DataStatistics = statistics.json()
+    else:
+        print("Statistics not found")
+    return JsonResponse(DataStatistics, safe=True)
 
 def getSubstrateNodes(request):
     SubstrateNodes = SubstrateNode.objects.all()

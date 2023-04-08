@@ -136,16 +136,16 @@ def mapper(G,G1): #,IpAddress,ip_mask ):
                     cette étape que nous devons réfléchir a une méthdode consistante
                     pour l'installation des flux (elle est marqué dans TODOList)
                 '''
-                create_flow(u)
-                # ajouter le flux au noeud src
-                create_flow(u, flow, appId)
-                # ajouter le flux au noeud dst
-                create_flow(v, flow, appId)
-                # install_flow_rule(IpAddress,link["dst"]["port"],ip_mask,u)
-                # install_flow_rule(IpAddress,link["src"]["port"],ip_mask,v)
+                # create_flow(u)
+                # # ajouter le flux au noeud src
+                # create_flow(u, flow, appId)
+                # # ajouter le flux au noeud dst
+                # create_flow(v, flow, appId)
+                # # install_flow_rule(IpAddress,link["dst"]["port"],ip_mask,u)
+                # # install_flow_rule(IpAddress,link["src"]["port"],ip_mask,v)
                 G[u][v]['weight'] -=link_weight
 
     else:
         print("can't mapp the network ")
 
-def create_flow(deviceID)
+

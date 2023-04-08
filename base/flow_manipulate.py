@@ -27,8 +27,9 @@ import requests
         # }
 
 # create flow structure (flow json)
-def make_flow(deviceID, priority, timeout, isPermanent, treatment, selector):
+def make_flow(id, deviceID, priority, timeout, isPermanent, treatment, selector):
     flow = {}
+    flow["id"] = id
     flow["priority"] = priority
     flow["timeout"] = timeout
     flow["isPermanent"] = isPermanent
@@ -70,3 +71,4 @@ def get_flow(deviceID, flowID):
          return DataFlow
      else:
         print("Flow not found In Device : " + deviceID + " with flowID : " + flowID)
+
