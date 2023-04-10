@@ -13,4 +13,5 @@ urlpatterns = [
     path('mappings/', views.getMappings),
     path('Createvn/', views.postVn),
     path('Deletevn/<int:id>', views.deleteVn),
+    path('Getvn/<int:id>', views.getVn),
 ]

@@ -2,6 +2,9 @@ import requests
 from django.http import JsonResponse
 from base.models import SubstrateNode, SubstrateLink, VirtualNetwork, LogicalNode, LogicalLink, Mapping
 from .serializers import SubstrateNodeSerializer, SubstrateLinkSerializer, VirtualNetworkSerializer, LogicalNodeSerializer, LogicalLinkSerializer, MappingSerializer
+from base.mapper import *
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 def getTopologie(request):
     # get La topologie de réseau // pour le moment on a que un seul cluster
@@ -33,20 +36,45 @@ def getDevices(request):
 
     return JsonResponse(DevicesIDs, safe=True)
 
+@csrf_exempt
 def postVn(request):
-    # get Data from request
-    devices = request.POST.get('devices')
-    links = request.POST.get('links')
+    data = json.loads(request.body)
+    print(data)
+    devices = data['devices']
+    links = data['links']
+
     # check if devices and links are not empty
     if(devices == None or links == None):
+        print("devices or links are empty")
         return 
+    else:
+        print(type(devices))
+        print(type(links))
+        G1 = virtual_network(devices, links)
+        G = createGraph()
+        ph=getphysicalDevices()
+        if(mapper(G, G1,ph,'localhost','192.168.1.0/24',1)):
+            print("mapping done")
+
     # create a new virtual network
     # TODO: check if the virtual network can be mapped if it is so insert it in the database
     # TODO: if the virtual network can't be mapped return an Notification (requestNot added) to the user (FrontEnd)
 
 def deleteVn(request, id):
     print(id)
+    # delete a virtual network from the database
+    virtualNetwork = VirtualNetwork.objects.get(id=id)
+    virtualNetwork.delete()
     return JsonResponse({"message": "Virtual Network deleted"}, safe=False)
+
+def getVn(request, id):
+    # get a virtual network from the database
+    virtualNetwork = VirtualNetwork.objects.get(id=id)
+    LogicalLinks = LogicalLink.objects.filter( virtual_network=virtualNetwork)
+    LogicalNodes = LogicalNode.objects.filter( virtual_network=virtualNetwork)
+    serializerLink = LogicalLinkSerializer(LogicalLinks, many=True)
+    serializerNode = LogicalNodeSerializer(LogicalNodes, many=True)
+    return JsonResponse({"logicalnodes":serializerNode.data, "logicallinks":serializerLink.data}, safe=False)
 
 
 def getStatistics(request):
