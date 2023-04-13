@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpRequest
 import requests
 from json import dumps
 import json
-from base.models import VirtualNetwork, LogicalNode, LogicalLink, Mapping
+from base.models import *
 # # Create your views here.
 # Récuperer l'addres ip du controller
 IpAddress = "localhost"
@@ -97,19 +97,44 @@ def delete_flow(deviceID, flowID):
             print("Flow deleted")
         else:
             print("Flow not deleted")
+            
+def addDeviceTODB(device):
+    Device = {
+        # "id": int(device['chassisId']),
+        "name": device['id'],
+        "capacity": 7,
+    }
+    substrate_device = SubstrateNode.objects.create(**Device)
+    substrate_device.save()
 
+def addlinkTODB(link):
+    sourceNode = SubstrateNode.objects.get(name=link['src']['device'])
+    targetNode = SubstrateNode.objects.get(name=link['dst']['device'])
+    link = {
+        'name': f'{link["src"]["device"]}-{link["dst"]["device"]}',
+        "source_substrate_node": sourceNode,
+        "target_substrate_node": targetNode,
+        "bandwidth": 100,
+    }
+    substrate_link = SubstrateLink.objects.create(**link)
+    substrate_link.save()
 
+# for device in DataDevices['devices']:
+#     addDeviceTODB(device)
+
+# for link in DataTopo['links']:
+#     addlinkTODB(link)
 
 print(DevicesIDs)
-virtual_networks = VirtualNetwork.objects.get(name="VN1")
-virtual_nodes = LogicalNode.objects.filter(virtual_network=virtual_networks)
-logical_links = LogicalLink.objects.get(name="LL1VN1")
-substrate_links = Mapping.objects.filter(logical_link=logical_links)
-for link in substrate_links:
-    print(link.substrate_link.name)
+# virtual_networks = VirtualNetwork.objects.get(name="VN1")
+# virtual_nodes = LogicalNode.objects.filter(virtual_network=virtual_networks)
+# logical_links = LogicalLink.objects.get(name="LL1VN1")
+# substrate_links = Mapping.objects.filter(logical_link=logical_links)
+# for link in substrate_links:
+#     print(link.substrate_link.name)
 # print(substrate_links)
 
-print(virtual_nodes)
+# print(virtual_nodes)
 
 def home(request):
     return render(request, 'home.html')

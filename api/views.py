@@ -42,9 +42,10 @@ def postVn(request):
     print(data)
     devices = data['devices']
     links = data['links']
+    name = data['name']
 
     # check if devices and links are not empty
-    if(devices == None or links == None):
+    if(devices == None or links == None or name == None):
         print("devices or links are empty")
         return 
     else:
@@ -52,13 +53,19 @@ def postVn(request):
         print(type(links))
         G1 = virtual_network(devices, links)
         G = createGraph()
-        ph=getphysicalDevices()
-        if(mapper(G, G1,ph,'localhost','192.168.1.0/24',1)):
+        ph = getphysicalDevices()
+        if(mapper(G, G1,ph,'localhost','192.168.1.0/24',1,name)):
             print("mapping done")
+        
+            # create a new virtual network
+            # Vn ={
+            #     "name": data['name'],
+            # }
+            # virtualNetwork = VirtualNetwork.objects.create()
+            # create logical nodes
 
-    # create a new virtual network
-    # TODO: check if the virtual network can be mapped if it is so insert it in the database
-    # TODO: if the virtual network can't be mapped return an Notification (requestNot added) to the user (FrontEnd)
+            # TODO: check if the virtual network can be mapped if it is so insert it in the database
+            # TODO: if the virtual network can't be mapped return an Notification (requestNot added) to the user (FrontEnd)
 
 def deleteVn(request, id):
     print(id)
@@ -114,5 +121,6 @@ def getMappings(request):
     Mappings = Mapping.objects.all()
     serializer = MappingSerializer(Mappings, many=True)
     return JsonResponse({"mappings":serializer.data}, safe=False)
+
 
 # Path: base\models.py

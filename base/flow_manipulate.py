@@ -72,7 +72,7 @@ import requests
 #      else:
 #         print("Flow not found In Device : " + deviceID + " with flowID : " + flowID)
 
-def install_flow_rule(IpAddress,ip_network, device_id,VN_ID):
+def install_flow_rule(IpAddress,ip_network, device_id,VN_ID,meter_id):
     # Define the flow rule data
     flow = {
         "flowId" : "4",
@@ -105,19 +105,25 @@ def install_flow_rule(IpAddress,ip_network, device_id,VN_ID):
                 {
                     "type": "OUTPUT",
                     "port": "FLOOD"
+                },
+               
+                {
+                    "type": "METER",
+                    "meterId": meter_id
                 }
             ]
         },
        
         
     }
+    appID=1
     flow = requests.post("http://"+ IpAddress + ":8181/onos/v1/flows/"+ device_id + "?" + "appID=" + f"{VN_ID}", auth =('karaf','karaf'), data=json.dumps(flow))
     if(flow.status_code == 201):
         print(f"Flow of the device mapping created in {device_id}")
     else:
         print("Flow not created")
-
-def install_flow_rule_forward(IpAddress,ip_mask,device_id,portIn,portOut,VN_ID) :
+    
+def install_flow_rule_forward(IpAddress,ip_network,device_id,portIn,portOut,VN_ID,meter_id) :
 
     flow = {
         "flowId" : "4",
@@ -138,34 +144,46 @@ def install_flow_rule_forward(IpAddress,ip_mask,device_id,portIn,portOut,VN_ID) 
                 },
                 {
                     "type": "IPV4_SRC",
-                    "ip": f"{ip_mask}"
+                    "ip": f"{ip_network}"
  
                 },
                 {
                     "type": "IPV4_DST",
-                    "ip": f"{ip_mask}"
+                    "ip": f"{ip_network}"
  
                 }
-                
             ]
         },
         "treatment": {
             "instructions": [
+                
+                
                 {
                     "type": "OUTPUT",
                     "port": f"{portOut}"
-                }
+                }, 
+                {
+                    "type": "METER",
+                    "meterId": meter_id
+                },
+                
+
             ]
         },
        
         
     }
-    appID=1
+
     flow = requests.post("http://"+ IpAddress + ":8181/onos/v1/flows/"+ device_id + "?" + "appID=" + f"{VN_ID}", auth =('karaf','karaf'), data=json.dumps(flow))
     if(flow.status_code == 201):
         print(f"Flow of the bridge created in {device_id}")
     else:
         print("Flow not created")
+
+
+
+
+
 
 def flow_for_isolating (IpAddress,ip_network, device_id,VN_ID):
     # Define the flow rule data 
@@ -208,7 +226,7 @@ def flow_for_isolating (IpAddress,ip_network, device_id,VN_ID):
       ]
    }
 }
-    print("first flow")
+    
     flow = requests.post("http://"+ IpAddress + ":8181/onos/v1/flows/"+ device_id + "?" + "appID=" + f"{VN_ID}", auth =('karaf','karaf'), data=json.dumps(flow))
     if(flow.status_code == 201):
         print(f"Flow of isolation created in {device_id}")
@@ -222,3 +240,33 @@ def delete_VN(IpAddress, VN_ID):
                  print("VN deleted")
               else:
                    print("VN not deleted")
+
+def create_meter(IpAddress,device_id,rate):
+    rate = rate * 1000
+    meter={
+      "deviceId": f"{device_id}",
+      "unit": "KB_PER_SEC",
+      "burst": "true",
+      "bands":[
+             {
+              "type": "DROP",
+              "rate": rate,
+              "burstSize": "100",
+              "prec": "0"
+             },
+        ]
+} 
+     
+    response = requests.post("http://"+ IpAddress + ":8181/onos/v1/meters/"+ device_id , auth =('karaf','karaf'), data=json.dumps(meter))
+    if(response.status_code == 201):
+        #print(f"meter  created in {device_id}")
+        print(rate)
+        print(response.headers.get('Location'))
+        meter_id = response.headers.get('Location').split('/')[-1] # Convertir la réponse en format JSON
+        #print(meter_id)
+        return meter_id
+    else:
+        print("meter not created") 
+     
+   
+ 

@@ -4,6 +4,7 @@ import requests
 from heapq import heappop, heappush
 from itertools import count
 from base.flow_manipulate import *
+from base.models import *
 
 def virtual_network(devices, links):
     G = nx.Graph()
@@ -43,7 +44,7 @@ def getphysicallinks():
     if(topologies.status_code == 200):
         DataTopo = topologies.json()
     return DataTopo
-
+# pysical graph
 def createGraph():
     G = nx.Graph()
     physicalDevices = getphysicalDevices()
@@ -52,9 +53,23 @@ def createGraph():
         G.add_node(device['id'], weight=7,weight2=1)
     for link in physicallinks['links']:
         G.add_edge(link['src']['device'], link['dst']['device'], weight=100, src_port=link['src']['port'], dst_port=link['dst']['port'])
+        G.add_edge(link['dst']['device'], link['src']['device'], weight=100, src_port=link['dst']['port'], dst_port=link['src']['port'])
+
     return G
 
-def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID ):
+def getpath(path_list, source, target,virtuel_nodes,physical_nodes):
+    for node in virtuel_nodes:
+        if node == source:
+            source = physical_nodes[virtuel_nodes.index(node)]
+        else :
+            if node == target:
+                target = physical_nodes[virtuel_nodes.index(node)]    
+
+    for i in range(len(path_list)):
+        if path_list[i][0] == source and path_list[i][len(path_list)-1] == target:
+            return path_list[i]
+
+def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID, name):
     
     # calcule availabitily  of node
 
@@ -88,28 +103,28 @@ def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID ):
 
 
     weights1=nx.get_node_attributes(G1, 'weight2')
-    sorted_nodes1 = sorted(weights1, key=weights1.get, reverse=True)    
-    #for node in sorted_nodes1:
+    virtualNodes = sorted(weights1, key=weights1.get, reverse=True)    
+    #for node in virtualNodes:
        #print(f"Node {node} has weight {weights1[node]}.")  
 
    
-    #print(len(sorted_nodes1))
+    #print(len(virtualNodes))
     #print(len(sorted_nodes))
     paths_list=[]
     weight_list=[]
 
     networkmapp=True
-    for i in range (len(sorted_nodes1)-1):
-       #print(f"the node {sorted_nodes1[i]}")
-       for j in range (i,len(sorted_nodes1)):
+    for i in range (len(virtualNodes)-1):
+       #print(f"the node {virtualNodes[i]}")
+       for j in range (i,len(virtualNodes)):
             if(i != j):
            
-                if G1.has_edge(sorted_nodes1[i],sorted_nodes1[j] ):
-                      #print(f"there is an edges between {sorted_nodes1[i]}{sorted_nodes1[j]}")
+                if G1.has_edge(virtualNodes[i],virtualNodes[j] ):
+                      #print(f"there is an edges between {virtualNodes[i]}{virtualNodes[j]}")
                       n=False
                       h=1
                       while (not n  and h < 3 ):
-                          #print(f"the path between {sorted_nodes1[i]}  {sorted_nodes1[j]} {k_shortest_paths(G,sorted_nodes[i], sorted_nodes[j], 1)}")
+                          #print(f"the path between {virtualNodes[i]}  {virtualNodes[j]} {k_shortest_paths(G,sorted_nodes[i], sorted_nodes[j], 1)}")
                           paths=k_shortest_paths(G,sorted_nodes[i], sorted_nodes[j], h) 
                           #verifier jusqu a arriver a un path qui peut mapper le virtuel path 
                           k=0
@@ -125,7 +140,7 @@ def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID ):
                                 if weight < min_weight:
                                     min_weight = weight
                              # verifier si le path peut mapper le lien virtuel 
-                             edge_data=G1.get_edge_data(sorted_nodes1[i] , sorted_nodes1[j])
+                             edge_data=G1.get_edge_data(virtualNodes[i] , virtualNodes[j])
                              if edge_data is not None:
                                 link_weight = edge_data['weight']               
                                 if min_weight < link_weight :
@@ -143,23 +158,32 @@ def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID ):
                       if n :
                            
                            
-                           print(f"the link between {sorted_nodes1[i]},{sorted_nodes1[j]} can be mapped")
+                           print(f"the link between {virtualNodes[i]},{virtualNodes[j]} can be mapped")
                            print(path)
                            paths_list.append(path)
                            weight_list.append(link_weight)
 
                      
                       else:
-                          print(f"can't map the link {sorted_nodes1[i]},{sorted_nodes1[j]} ")
+                          print(f"can't map the link {virtualNodes[i]},{virtualNodes[j]} ")
                           networkmapp=False
+                        # i think break is good
 
     if(networkmapp ==True):
+        print(virtualNodes) # les noeuds virtuekl
+        for node in virtualNodes :
+             print(G1.nodes[node]['weight'])
+        network_data = {
+        "device_id": None,
+         "weight": None,
+         "port_src": None,
+         "port_dest": None
+        }   
+        
+        network_data_list = []
         #mise a jours des liens et installation de flux
         for device in DataDevices['devices']:
              flow_for_isolating (IpAddress,ip_network, device['id'],VN_ID)
-       # for node in G.nodes():
-         #    flow_for_isolating (IpAddress,ip_network,node,VN_ID)    
-        
 
         n=len(paths_list)
         for i in range (n):
@@ -168,36 +192,155 @@ def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID ):
             for s in range(len(path)-1):
                 u = path[s]
                 v = path[s+1]
-                # link["src"]["device"] = u
-                # link["dst"]["device"] = v
+               
 
                 # revoir le cas au le switch fait juste le forward de paquet ne mappe pas un device
-                if(u in sorted_nodes[0:len(sorted_nodes1)]):
-                     install_flow_rule(IpAddress,ip_network,u,VN_ID)
+                if(u in sorted_nodes[0:len(virtualNodes)]):
+                     
+                     if len(network_data_list) == 0:
+                         data = {
+                                  "device_id": u,
+                                  "weight": link_weight,
+                                  "port_src": 0,
+                                  "port_dest": 0,
+                                 }
+                         #data=network_data(u,link_weight,0,0)
+                         network_data_list.append(data)
+                     else :
+                        
+                         Trouver=False
+                         for data in network_data_list:
+                            if(data['device_id'] == u ):
+                                Trouver=True
+                                if(link_weight > data['weight']):
+                                    data['weight']=link_weight
+                                else : 
+                                    link_weight=data['weight']
+                                
+                            
+                         
+                         if(Trouver==False) : 
+                            data = {
+                                  "device_id": u,
+                                  "weight": link_weight,
+                                  "port_src": 0,
+                                  "port_dest": 0,
+                                 }
+                            #data=network_data(u,link_weight,port_source,port_destination)
+                            network_data_list.append(data)
+                     meter_id=create_meter(IpAddress,u,link_weight)
+                     install_flow_rule(IpAddress,ip_network,u,VN_ID,meter_id)
+                     
+
+
                 else:
                      u = path[s]
                      v = path[s+1]
                      edge_data=G.get_edge_data(u , v)
                      port_source=edge_data['src_port']
-                     edge_data=G.get_edge_data(u,path[s-1] )
-                     port_destination =edge_data['src_port']
-
-                     print(port_destination)
+                     edge_data2=G.get_edge_data(u ,path[s-1])
+                     port_destination =edge_data2['src_port']
+                     print(path[s-1])                       
+                     print(u)
+                     print(path[s+1])
+                     
                      print(port_source)
-                     install_flow_rule_forward(IpAddress,ip_network,u,port_source,port_destination,VN_ID)   
-                     install_flow_rule_forward(IpAddress,ip_network,u,port_destination,port_source,VN_ID)
+                     print(port_destination)
+                    #  print(edge_data2['src_port'])
+                    #  print(edge_data2['dst_port'])
+                     if len(network_data_list) == 0:
+                         data = {
+                                  "device_id": u,
+                                  "weight": link_weight,
+                                  "port_src": port_source,
+                                  "port_dest": port_destination,
+                                 }
+                         #data=network_data(u,link_weight,port_source,port_destination)
+                         network_data_list.append(data)
+                     else :
+                         for data in network_data_list:
+                            Trouver=False
+                            if(data['device_id'] == u and port_source==data['port_src']  and port_destination == data['port_dest'] ):
+                                Trouver=True
+                                if(link_weight>data['weight']):
+                                    data['weight']=link_weight
+                                else : 
+                                    link_weight=data['weight']
+                                
+                         if(Trouver==False) : 
+                            data = {
+                                  "device_id": u,
+                                  "weight": link_weight,
+                                  "port_src": port_source,
+                                  "port_dest": port_destination,
+                                 }
+                            #data=network_data(u,link_weight,port_source,port_destination)
+                            network_data_list.append(data)
 
-
+                     meter_id=create_meter(IpAddress,u,link_weight)
+                     install_flow_rule_forward(IpAddress,ip_network,u,port_source,port_destination,VN_ID,meter_id)   
+                     install_flow_rule_forward(IpAddress,ip_network,u,port_destination,port_source,VN_ID,meter_id)
+                    # install_flow_rule(IpAddress,ip_network,u,VN_ID)
+                     #install_flow_rule(IpAddress,ip_network,u,VN_ID,meter_id)
+                
                 G[u][v]['weight'] -=link_weight
-            install_flow_rule(IpAddress,ip_network,v,VN_ID)
-        liste_devices=sorted_nodes[0:len(sorted_nodes1)]
-        return True
-        # return liste_devices,paths_list
-            
-    else:
-        print("can't map the network ")
-        return False
+            meter_id=create_meter(IpAddress,v,link_weight)
+            install_flow_rule(IpAddress,ip_network,v,VN_ID,meter_id)
+        liste_devices=sorted_nodes[0:len(virtualNodes)]
+        print("la liste des noeuds ")
+        print(liste_devices)
+        print(virtualNodes)
+        
+        # Vn = {
+        #     'name': name
+        # }
+        # virtual_network = VirtualNetwork.objects.create(**Vn)
+        # virtual_network.save()
+        # # get capacity the logical nodes
+        # for node in virtualNodes:        
+        #      LogicalNode = {
+        #             'name': node,
+        #             'virtual_network': virtual_network,
+        #             'substrate_node': SubstrateNode.objects.get(name=liste_devices[virtualNodes.index(node)]),
+        #             'capacity': G1.nodes[node]['weight']
+        #      }
+        #      logical_node = LogicalNode.objects.create(**LogicalNode)
+        #      logical_node.save()
+        
+        # #  get the logical links
+        # print(G1.edges.data())
+        # for data in G1.edges.data():
+        #     print(data[0])
+        #     print(data[1])
+        #     print(data[2])
+        #     LogicalLink = {
+        #             'name': data[0] + "-" + data[1],
+        #             'virtual_network': virtual_network,
+        #             # 'substrate_link': SubstrateLink.objects.get(name=data[0] + data[1]),
+        #             'capacity': data[2]['weight'],
+        #             'source_logical_node': data[0],
+        #             'target_logical_node': data[1],
+        #         }
+        #     logical_link = LogicalLink.objects.create(**LogicalLink)
+        #     logical_link.save()
 
+        #     path_map = getpath(paths_list, data[0], data[1], virtualNodes, liste_devices)
+        #     for i in range(0, len(path_map) - 2):
+        #         mapping = {
+        #             'logical_link': logical_link,
+        #             'substrate_link': SubstrateLink.objects.get(name=path_map[i] + path_map[i + 1]),
+        #         }
+        #         mapping = Mapping.objects.create(**mapping)
+        #         mapping.save()
+            
+        #la liste des chemins 
+        # paths_list[0]
+        # return liste_devices,paths_list
+       
+        return True
+    else:
+        # print("can't map the network ")
+        return False
 
 
 def delete_VN(IpAddress, VN_ID):
