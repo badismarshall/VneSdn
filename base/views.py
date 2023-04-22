@@ -13,37 +13,41 @@ IpAddress = "localhost"
 topologies = requests.get("http://"+ IpAddress + ":8181/onos/v1/topology/clusters/0/links", auth =('onos','rocks'))
 if(topologies.status_code == 200):
     DataTopo = topologies.json() # met dans un fichier json
+    links = []
+    for link in DataTopo['links']:
+        links.append({"source": link ["src"]["device"] , "target": link["dst"]["device"] })
 else:
     print("Topologies not found")
 
-links = []
-for link in DataTopo['links']:
-    links.append({"source": link ["src"]["device"] , "target": link["dst"]["device"] })
+
 
 
 # get Devices
 devices = requests.get("http://"+ IpAddress + ":8181/onos/v1/devices", auth =('onos','rocks'))
 if(devices.status_code == 200):
     DataDevices = devices.json()
+    # Récuperer les id des devices (switch)
+    DevicesIDs = {} # liste des DevicesID
+    DevicesIDs['devices'] = []
+    for device in DataDevices['devices']:
+        # DevicesIDs['devices'].append(device['id'])
+        DevicesIDs['devices'].append({"id":device['id'], "chid": device['chassisId']})
 else:
     print("Devices not found")
 
-# Récuperer les id des devices (switch)
-DevicesIDs = {} # liste des DevicesID
-DevicesIDs['devices'] = []
-for device in DataDevices['devices']:
-    DevicesIDs['devices'].append(device['id'])
+
 
 # Récuperer les id des Hosts
 hosts_get = requests.get("http://"+ IpAddress + ":8181/onos/v1/hosts", auth =('onos','rocks'))
 if(hosts_get.status_code == 200):
     DataHosts = hosts_get.json()
+    Hosts = []
+    for host in DataHosts['hosts']:
+        Hosts.append({"hostID": host['id'], "DeviceID" : host['locations'][0]["elementId"]})
 else:
     print("Hosts not found")
 
-Hosts = []
-for host in DataHosts['hosts']:
-    Hosts.append({"hostID": host['id'], "DeviceID" : host['locations'][0]["elementId"]})
+
 
 # ------------------- Flows ------------------- #
 # get flows by device
@@ -100,7 +104,7 @@ def delete_flow(deviceID, flowID):
             
 def addDeviceTODB(device):
     Device = {
-        # "id": int(device['chassisId']),
+        "id": int(device['chassisId']),
         "name": device['id'],
         "capacity": 7,
     }

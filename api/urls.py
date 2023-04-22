@@ -14,4 +14,10 @@ urlpatterns = [
     path('Createvn/', views.postVn),
     path('Deletevn/<int:id>', views.deleteVn),
     path('Getvn/<int:id>', views.getVn),
+    path('Getsubstratelinksbyid/<int:id>', views.getSubstrateLinksbyid),
+    path('Getsubstratenodesbyid/<int:id>', views.getSubstrateNodesbyid),
+    path('Getflownumberofdevices/', views.getFlowNumberofDevices),
+    path('NumberoflogicalNodesMapped/', views.getNumberoflogicalNodesMapped),
+    path('GetMeterNumberofDevices/', views.getMeterNumberofDevices),
+    path('GetNetworkInfo/', views.getNetworkInformation),
 ]

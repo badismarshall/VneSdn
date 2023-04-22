@@ -57,16 +57,19 @@ def createGraph():
 
     return G
 
-def getpath(path_list, source, target,virtuel_nodes,physical_nodes):
+def getpath(path_list, source, target, virtuel_nodes, physical_nodes):
     for node in virtuel_nodes:
         if node == source:
             source = physical_nodes[virtuel_nodes.index(node)]
+            print(source)
         else :
             if node == target:
-                target = physical_nodes[virtuel_nodes.index(node)]    
-
+                target = physical_nodes[virtuel_nodes.index(node)]
+                print(target)    
+    print(type(path_list[0][1]))
     for i in range(len(path_list)):
-        if path_list[i][0] == source and path_list[i][len(path_list)-1] == target:
+        if path_list[i][0] == source and path_list[i][len(path_list[i])-1] == target:
+            print("am here")
             return path_list[i]
 
 def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID, name):
@@ -75,7 +78,7 @@ def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID, name):
 
     for node in G.nodes():
        edges = G.edges(node, data=True)
-       weight=0
+       weight = 0
        for u, v, data in edges:
          weight = weight + data.get('weight')
          
@@ -291,47 +294,52 @@ def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID, name):
         print(liste_devices)
         print(virtualNodes)
         
-        # Vn = {
-        #     'name': name
-        # }
-        # virtual_network = VirtualNetwork.objects.create(**Vn)
-        # virtual_network.save()
-        # # get capacity the logical nodes
-        # for node in virtualNodes:        
-        #      LogicalNode = {
-        #             'name': node,
-        #             'virtual_network': virtual_network,
-        #             'substrate_node': SubstrateNode.objects.get(name=liste_devices[virtualNodes.index(node)]),
-        #             'capacity': G1.nodes[node]['weight']
-        #      }
-        #      logical_node = LogicalNode.objects.create(**LogicalNode)
-        #      logical_node.save()
+        Vn = {
+            'name': name
+        }
+        virtual_network = VirtualNetwork.objects.create(**Vn)
+        virtual_network.save()
+        # get capacity the logical nodes
+        for node in virtualNodes:        
+             Logicalnode = {
+                    'name': node + Vn['name'],
+                    'virtual_network': virtual_network,
+                    'substrate_node': SubstrateNode.objects.get(name=liste_devices[virtualNodes.index(node)]),
+                    'capacity': G1.nodes[node]['weight']
+             }
+             logical_node = LogicalNode.objects.create(**Logicalnode)
+             logical_node.save()
         
         # #  get the logical links
         # print(G1.edges.data())
-        # for data in G1.edges.data():
-        #     print(data[0])
-        #     print(data[1])
-        #     print(data[2])
-        #     LogicalLink = {
-        #             'name': data[0] + "-" + data[1],
-        #             'virtual_network': virtual_network,
-        #             # 'substrate_link': SubstrateLink.objects.get(name=data[0] + data[1]),
-        #             'capacity': data[2]['weight'],
-        #             'source_logical_node': data[0],
-        #             'target_logical_node': data[1],
-        #         }
-        #     logical_link = LogicalLink.objects.create(**LogicalLink)
-        #     logical_link.save()
-
-        #     path_map = getpath(paths_list, data[0], data[1], virtualNodes, liste_devices)
-        #     for i in range(0, len(path_map) - 2):
-        #         mapping = {
-        #             'logical_link': logical_link,
-        #             'substrate_link': SubstrateLink.objects.get(name=path_map[i] + path_map[i + 1]),
-        #         }
-        #         mapping = Mapping.objects.create(**mapping)
-        #         mapping.save()
+        for data in G1.edges.data():
+            print(data[0])
+            print(data[1])
+            print(data[2])
+            Logicallink = {
+                    'name': data[0] + Vn['name'] + "-" + data[1] + Vn['name'],
+                    'virtual_network': virtual_network,
+                    # 'substrate_link': SubstrateLink.objects.get(name=data[0] + data[1]),
+                    'bandwidth': data[2]['weight'],
+                    'source_logical_node': LogicalNode.objects.get(name=data[0] + Vn['name']),
+                    'target_logical_node': LogicalNode.objects.get(name=data[1] + Vn['name']),
+                }
+            logical_link = LogicalLink.objects.create(**Logicallink)
+            logical_link.save()
+            print("path_list")
+            print(paths_list)
+            path_map = getpath(paths_list, data[0], data[1], virtualNodes, liste_devices) 
+            if path_map == None:
+                path_map = getpath(paths_list, data[1], data[0], virtualNodes, liste_devices)
+            print(path_map)
+            for i in range(0, len(path_map) - 1): 
+                mapping = {
+                    'logical_link': logical_link,
+                    'substrate_link': SubstrateLink.objects.get(name=path_map[i] +"-"+ path_map[i + 1]),
+                }
+                mapping = Mapping.objects.create(**mapping)
+                mapping.save()
+        print (paths_list)
             
         #la liste des chemins 
         # paths_list[0]

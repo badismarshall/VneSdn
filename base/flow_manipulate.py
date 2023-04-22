@@ -185,7 +185,7 @@ def install_flow_rule_forward(IpAddress,ip_network,device_id,portIn,portOut,VN_I
 
 
 
-def flow_for_isolating (IpAddress,ip_network, device_id,VN_ID):
+def flow_for_isolating (IpAddress,ip_network, device_id, VN_ID):
     # Define the flow rule data 
     flow ={
    
