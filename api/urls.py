@@ -2,6 +2,7 @@ from django.urls import path
 from api import views
 
 urlpatterns = [
+    path('login/', views.login),
     path('topo/', views.getTopologie),
     path('devices/', views.getDevices),
     path('statistics/', views.getStatistics),
@@ -18,6 +19,8 @@ urlpatterns = [
     path('Getsubstratenodesbyid/<int:id>', views.getSubstrateNodesbyid),
     path('Getflownumberofdevices/', views.getFlowNumberofDevices),
     path('NumberoflogicalNodesMapped/', views.getNumberoflogicalNodesMapped),
+    path('GetNumberoflogicalLinksMapped/', views.getNumberoflogicalLinksMapped),
     path('GetMeterNumberofDevices/', views.getMeterNumberofDevices),
     path('GetNetworkInfo/', views.getNetworkInformation),
+    path('GetflowsNumberofvn/', views.getflowsnumberforVn),
 ]

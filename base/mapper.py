@@ -74,7 +74,7 @@ def getpath(path_list, source, target, virtuel_nodes, physical_nodes):
 
 def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID, name):
     
-    # calcule availabitily  of node
+    # calcule availabitily of node
 
     for node in G.nodes():
        edges = G.edges(node, data=True)

@@ -7,6 +7,23 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from base.flow_manipulate import delete_VN
 from base.views import DevicesIDs
+from django.contrib.auth import authenticate, login, logout
+
+
+
+# make login 
+@csrf_exempt
+def login(request):
+    data = json.loads(request.body)
+    username = data['username']
+    password = data['password']
+    user = authenticate(request, username=username, password=password)
+    if user is not None:
+        return JsonResponse({'status': 'success'}, safe=True)
+    else:
+        return JsonResponse({'status': 'failed'}, safe=True)
+    print("login")
+
 
 def getTopologie(request):
     # get La topologie de réseau // pour le moment on a que un seul cluster
@@ -59,7 +76,7 @@ def postVn(request):
         ph = getphysicalDevices()
         if(mapper(G, G1, ph, 'localhost','192.168.1.0/24', name, name)):
             print("mapping done")
-        
+            return JsonResponse({"Vn": "true"}, safe=False)
             # create a new virtual network
             # Vn ={
             #     "name": data['name'],
@@ -69,7 +86,7 @@ def postVn(request):
 
             # TODO: check if the virtual network can be mapped if it is so insert it in the database
             # TODO: if the virtual network can't be mapped return an Notification (requestNot added) to the user (FrontEnd)
-        return JsonResponse({"message": "Virtual Network added"}, safe=False)
+        return JsonResponse({"Vn": "false"}, safe=False)
 
 def deleteVn(request, id):
     print(id)
@@ -155,6 +172,10 @@ def getNumberoflogicalNodesMapped(request):
         data = {"deviceID": node.id, "logicalnodenumber": len(logical_nodes)}
         response['NlogicalNodes'].append(data)
     return JsonResponse(response, safe=False)
+def getNumberoflogicalLinksMapped(request):
+    logical_links = LogicalLink.objects.all()
+    data = {"logicallinknumber": len(logical_links)}
+    return JsonResponse(data, safe=False)
 
 def getMeterNumberofDevices(request):
     response = {}
@@ -166,13 +187,35 @@ def getMeterNumberofDevices(request):
     return JsonResponse(response, safe=False)
 
 def getNetworkInformation(request):
+    # get the number of virtual networks in the database
+    virtualNetworks = VirtualNetwork.objects.all()
     networkinfo = requests.get("http://localhost:8181/onos/v1/system", auth =('onos','rocks'))
     if(networkinfo.status_code == 200):
         DataNetworkInfo = networkinfo.json()
-        DataUtil = {"devices": DataNetworkInfo['devices'], "links": DataNetworkInfo['links'], "hosts": DataNetworkInfo['hosts'],"flows": DataNetworkInfo['flows']}
+        DataUtil = {"devices": DataNetworkInfo['devices'], "links": DataNetworkInfo['links'], "hosts": DataNetworkInfo['hosts'],"flows": DataNetworkInfo['flows'], "Vns": len(virtualNetworks)}
         return JsonResponse(DataUtil, safe=True)
     else:
         print("Network information not found")
         return JsonResponse({"message": "Network information not found"}, safe=False)
 
+def getflowsnumberforVn(request):
+    virtualNetworks = VirtualNetwork.objects.all()
+    response = {}
+    response['flowsnumber'] = []
+    for virtualNetwork in virtualNetworks:
+        flowsvn = requests.get("http://"+ "localhost" + ":8181/onos/v1/flows/application/"+ virtualNetwork.name, auth =('onos','rocks'))
+        if(flowsvn.status_code == 200):
+            data = {"virtualnetwork": virtualNetwork.name, "flowsnumber": len(flowsvn.json()['flows'])}
+            response['flowsnumber'].append(data)
+    return JsonResponse(response, safe=False)
+def getmetersnumberofvn(request):
+    virtualNetworks = VirtualNetwork.objects.all()
+    response = {}
+    response['metersnumber'] = []
+    for virtualNetwork in virtualNetworks:
+        metersvn = requests.get("http://"+ "localhost" + ":8181/onos/v1/meters/application/"+ virtualNetwork.name, auth =('onos','rocks'))
+        if(metersvn.status_code == 200):
+            data = {"virtualnetwork": virtualNetwork.name, "metersnumber": len(metersvn.json()['meters'])}
+            response['metersnumber'].append(data)
+    return JsonResponse(response, safe=False)
 # Path: base\models.py
