@@ -5,6 +5,8 @@ from heapq import heappop, heappush
 from itertools import count
 from base.flow_manipulate import *
 from base.models import *
+from base.models import SubstrateLink
+from api.serializers import SubstrateLinkSerializer
 
 def virtual_network(devices, links):
     G = nx.Graph()
@@ -51,9 +53,15 @@ def createGraph():
     physicallinks = getphysicallinks()
     for device in physicalDevices['devices']:
         G.add_node(device['id'], weight=7,weight2=1)
+    
     for link in physicallinks['links']:
-        G.add_edge(link['src']['device'], link['dst']['device'], weight=100, src_port=link['src']['port'], dst_port=link['dst']['port'])
-        G.add_edge(link['dst']['device'], link['src']['device'], weight=100, src_port=link['dst']['port'], dst_port=link['src']['port'])
+        # get the capacity of the link from the database (TODO)
+        # get the link by name from the database
+        linksub = SubstrateLink.objects.get(name=link['src']['device'] +'-'+ link['dst']['device'])
+        serializer = SubstrateLinkSerializer(linksub)
+        ###
+        G.add_edge(link['src']['device'], link['dst']['device'], weight=serializer.data['bandwidth'], src_port=link['src']['port'], dst_port=link['dst']['port'])
+        G.add_edge(link['dst']['device'], link['src']['device'], weight=serializer.data['bandwidth'], src_port=link['dst']['port'], dst_port=link['src']['port'])
 
     return G
 

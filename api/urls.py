@@ -16,6 +16,7 @@ urlpatterns = [
     path('Deletevn/<int:id>', views.deleteVn),
     path('Getvn/<int:id>', views.getVn),
     path('Getsubstratelinksbyid/<int:id>', views.getSubstrateLinksbyid),
+    path('Getsubstratelinksbyname/<str:name>', views.getSubstrateLinksbyname),
     path('Getsubstratenodesbyid/<int:id>', views.getSubstrateNodesbyid),
     path('Getflownumberofdevices/', views.getFlowNumberofDevices),
     path('NumberoflogicalNodesMapped/', views.getNumberoflogicalNodesMapped),

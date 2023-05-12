@@ -112,6 +112,11 @@ def getSubstrateLinksbyid(request, id):
     substrateLink = SubstrateLink.objects.get(id=id)
     serializer = SubstrateLinkSerializer(substrateLink, many=False)
     return JsonResponse({"substratelinks":serializer.data}, safe=False)
+def getSubstrateLinksbyname(request, name):
+    # get a substrate link from the database
+    substrateLink = SubstrateLink.objects.get(name=name)
+    serializer = SubstrateLinkSerializer(substrateLink, many=False)
+    return JsonResponse({"substratelinks":serializer.data}, safe=False)
 def getSubstrateNodesbyid(request, id):
     # get a substrate node from the database
     substrateNode = SubstrateNode.objects.get(id=id)
@@ -138,6 +143,12 @@ def getSubstrateLinks(request):
 
 def getVirtualNetworks(request):
     VirtualNetworks = VirtualNetwork.objects.all()
+    # get the number of nodes and links for each virtual network
+    # vnnodes = {}
+    # vnlinks = {}
+    # for vn in VirtualNetworks:
+    #     vn.numberofnodes = LogicalNode.objects.filter(virtual_network=vn).count()
+    #     vn.numberoflinks = LogicalLink.objects.filter(virtual_network=vn).count()
     serializer = VirtualNetworkSerializer(VirtualNetworks, many=True)
     return JsonResponse({"virtualnetworks":serializer.data}, safe=False)
 
