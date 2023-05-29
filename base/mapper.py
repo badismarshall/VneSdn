@@ -8,6 +8,7 @@ from base.models import *
 from base.models import SubstrateLink
 from api.serializers import SubstrateLinkSerializer
 
+
 def virtual_network(devices, links):
     G = nx.Graph()
     for deviceId, deviceData in devices.items():    
@@ -80,8 +81,9 @@ def getpath(path_list, source, target, virtuel_nodes, physical_nodes):
             print("am here")
             return path_list[i]
 
-def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID, name):
-    
+def mapper(G,G1,DataDevices,IpAddress,ip_networkk,VN_ID, name):
+    ip_network = '192.168.' + str(ip_networkk) + '.0/24'
+
     # calcule availabitily of node
 
     for node in G.nodes():
@@ -295,6 +297,9 @@ def mapper(G,G1,DataDevices,IpAddress,ip_network,VN_ID, name):
                      #install_flow_rule(IpAddress,ip_network,u,VN_ID,meter_id)
                 
                 G[u][v]['weight'] -=link_weight
+                # get the link from database
+                linksub = SubstrateLink.objects.get(name = u +'-'+ v)
+                linksub.bandwidth -= link_weight
             meter_id=create_meter(IpAddress,v,link_weight)
             install_flow_rule(IpAddress,ip_network,v,VN_ID,meter_id)
         liste_devices=sorted_nodes[0:len(virtualNodes)]

@@ -63,7 +63,7 @@ def postVn(request):
     devices = data['devices']
     links = data['links']
     name = data['name']
-
+    Vnid = data['Vnid']
     # check if devices and links are not empty
     if(devices == None or links == None or name == None):
         print("devices or links are empty")
@@ -74,7 +74,7 @@ def postVn(request):
         G1 = virtual_network(devices, links)
         G = createGraph()
         ph = getphysicalDevices()
-        if(mapper(G, G1, ph, 'localhost','192.168.1.0/24', name, name)):
+        if(mapper(G, G1, ph, 'localhost',Vnid, name, name)):
             print("mapping done")
             return JsonResponse({"Vn": "true"}, safe=False)
             # create a new virtual network
